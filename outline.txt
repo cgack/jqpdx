@@ -1,0 +1,51 @@
+jQuery Mobile has amazing cross-device and cross-browser compatibility, lending a native feel to many mobile browsing experiences. 
+Sometimes you want your awesome jQuery Mobile application to be downloadable from a native app store, for these times you turn to Phonegap. 
+In this talk I will discuss everything from how to setup a jQuery Mobile application with Phonegap to not only make the application feel native, but also will show how implementing the native functionality that comes with Phonegap can fit easily and seamlessly into your jQuery Mobile application. 
+Along the way we'll discuss Remote debugging techniques as well as some gotchas, such as iOS URL whitelisting, and how to programatically allow for opening URLs outside of your WebView.
+
+slides
+
+about me (brief + Hx)
+	about the talk
+
+why native targets
+	app store presence
+	big business
+	all the kids are doing it
+
+about jqm
+	goals and details
+	simple markup --> enhanced to awesome!
+
+about phonegap
+	webview wrapper
+	access to native functionality: camera, contacts, file system
+	cross platform swiggity
+	plugins!
+
+about jqm + phonegap
+	why we use it
+		good for a smaller team of web folk
+		we still want a native app in the  play store/ app store
+			or at least the business needs the app
+	what benefits it offers to a small team
+		html + js + css == comfort zone
+		object-c + java || c++ >> not as easy to transition for a web shop
+
+about jqm themes and styling.
+	default themes are awesome
+	easily customize themes
+	BB10??? || Portal of the Future
+		customize $.widget, easily built and implemented on our site
+			same widget code work on our desktop site as well with jquery UI == winning
+
+about implementing native stuffs
+	show how easy it is to integrate the camera functionality.
+	NOT PHONEGAP, but phonegap plugin -> UrbanAirship
+		-now we have cross platform Push Notifications!
+
+remote debugging
+	alert
+	console in xcode
+	logcat in eclipse
+	

@@ -1,0 +1,409 @@
+/* Slide 0 */
+Hello, I hope things are going well for you and that continues.
+
+As mentioned, I'm Cory Gackenheimer. I'm gonna start of by sharing just a little bit about me. 
+
+/* Slide 1 */
+I'm a software engineer at a company called Healthx in the state of Indiana where we have a jQuery Mobile + Phonegap
+application, the development of which I'll be baseing most of the information in this talk.
+
+I've contributed a few patches to various projects and I hack a lot in my spare time.
+
+Over the past year or so I have contributed writing to a collaborative jQuery Mobile Cookbook - a project that when its published will be an amazing feat.
+I am also working on a Node.js book that is due to be published sometime this fall.
+
+Enough about me, lets get to what this talk is about.
+
+/* slide 2 */
+The title of this talk is Dealing with the Natives.
+I want to talk about dealing with producing an application, destined for the native app stores and devices using jquery mobile
+and phonegap. 
+I will briefly discuss jQuery Mobile and PhoneGap describing how I utilize them in the real world
+to build our mobile application
+
+i will be discussing native device integration which makes things like incorporating your HTML application with things like the device file system and camera extremely painless across platforms. 
+
+next I'll talk about something that is a little more involved. 
+Using the plugin culture that comes with PhoneGap you can add features to your app that are becoming ubiquitous in the mobile development world -> push notificiations. 
+I'll try to explain how you can quickly integrate with UrbanAirship to get push across your devices.
+
+Then perhaps one of the most difficult tasks in web development today, be it native or strictly mobile web is remote debugging.
+I'll try to cover some of the worst and best practices in the current state of remote debugging.
+
+As time allows at the end, I'll unleash some of my questionable Objective-C and show one of my favorite tricks for iOS applications.
+
+/* Slide 3 */
+Before we get too far I'd like to discuss why web developers choose to go native/hybrid/whatever you want
+to call it when you use phonegap. There are probably countless solutions, but here are a few that hit it on
+the head for me.
+
+Business needs trump all others. This can be a business that needs to get their brand in the native app stores creating a marketing campaign in everyone's pocket. 
+Or you might also choose to monetize your application, not as easy to do with the web by itself. The native stores really help with this.
+
+Small teams of Web developers can handle it instead of perhaps larger teams of native developers.
+
+You might also attempt to convince users to download your app from your mobile experience (but that's not recommended) 
+/* IMAGE? 'Download our APP!!!!' */
+
+
+/* SLIDE 4 */
+So let me talk about PhoneGap and jQuery Mobile, but first I'll ask you all a question.
+* How many of you or your companies have a native application?
+  * How many target more than one native store (iOS, Android, Blackberry, Windows?)
+* How many use PhoneGap or another hybridization implementation?
+  * How many have at least heard of PhoneGap or Cordova
+
+Lets take just a quick look at PhoneGap because I think its important to know what problems it solves and where it shines
+
+PhoneGap - Adobe's brand name for Apache Cordova - lets you write your application in HTML, CSS, and JavaScript and then wrap your application in a native web wrapper (safari, android browser, bb10 webkit, IE9) 
+It then exposes a bridge between native device features and your application's JavaScript so you can access those features.
+
+As I already said, it makes using things like the camera and filesystem are now easy and accessible across platform \o/
+But more importantly, PhoneGap's main goal is to progress the web forward. 
+If you listen to the PhoneGap team talk about the project, the envision an ideal world years from now, 
+where writing your application will not require the native wrapper and the web will just work!... but that day is not today ... unless you are rocking FirefoxOS
+
+now let's take a quick look at why jquery mobile is a great choice for your mobile HTML framework.
+/* SLIDE 5 */
+jQuery Mobile should be your choice for a mobile ui framework for many reasons. We chose it because as an already jQuery centered organization, deep in jQUery and jQuery UI it was a natural progression for us to move there. Some people choose jQ Touch or Sencha, but we wanted to not only offer wrapped experiences for native, but also provide a mobile-web application. This is where jQuery Mobile shines /* SHOW COMPATIILTY TABLE */ as its has grade-A support across all of these platforms. Not just cross-platform, but cross-browser -> no webkit monoculture of blinkyness or whatever. The same app works on an iPhone 3G running ancient iOS as well as on a mid range Android phone running Firefox mobile.
+
+Also, authoring in jQuery Mobile isn't really about writing a bunch of client-side JavaScript as it is building an immersive HTML5 application. Because jQUery mobile starts with clean HTML markup with additional pepperings of data- attributes, you are able to build your application and let jQuery Mobile "the Framework" enhance the product to suit the need of the client browser.
+/* SHOW? A SIDE BY SIDE OF HTML AND THE ENHANCED VIEW? */
+Its also highly customizable - what jQuery offers is a base and a set of themes that can be easily manipulated to suit your brand or brands. 
+/* SHOW theme roller snippet and a couple examples of differences */
+
+Another big thing for me personally is the widget factory.  This is the widget framework that all jQUery UI extend from... THe great news is this is also how the jQUery Mobile team implemented the mobile widgets. This goes beyond custom theming and allows full plugin authoring. Blackberry created a robust theme that matches their native feel on Blackberry 10 and simply extends the widget factory for their plugins. 
+/* SHOW BLACKBERRY THEME */
+At work we architected a health information delivery system that uses a 'card' to deliver messages to the users. This works on both our jQuery Mobile based mapplication as well as on our web site, which only loads jQuery UI - from the same $.widget source.
+/* SHOW hx.card.js IMAGES */
+
+/* SLIDE 6 */
+Integrating Native functionality from PhoneGap into jQuery Mobile is, like I have said - Super simple.
+
+After you download your version of PhoneGap from phonegap.com or cordova.io. All you really need to do is to point PhoneGap to the root of your jQuery Mobile application.
+You then just have to add a JavaScript reference to your jQuery Mobile source to bridge to cordova and you should be good to go.
+/* SHOW cordova.js script src include */
+
+Then you can start into hooking into the native features that PhoneGap exposes.
+
+For this example I'll show you how to implement taking a photo and uploading that to your server using PhoneGap.
+
+First, note that PhoneGap's native api exposed in JavaScript uses the navigator object and extends it. 
+To make sure we've properly loaded phonegap there are a couple checks we can do before you enable your camera functionality
+// device ready
+// typeof navigator.camera !== 'undefined'
+
+once you've doen this, somewhere in the application you can initialize the camera and take a photo.
+This starts with setting the options object like you see here in the example.
+Here I set the destination is a file uri, source is camera but it could be an image you pick from the gallery.
+Also alow post process edit before you save it, and you get to pick your poision for encoding.
+
+        var cameraOptions = {
+            destinationType: Camera.DestinationType.FILE_URI,
+            sourceType: Camera.PictureSourceType.CAMERA,
+            allowEdit: true,
+            encodingType: Camera.EncodingType.JPG,
+            saveToPhotoAlbum: false
+        };
+
+Once the options are set for the camera you simply grab a photo by calling navigator.camera.getPicture.
+This takes three arguments, success, err, and options. blammo there you go.
+
+        navigator.camera.getPicture(onGetPictureSuccess, onGetPictureError, cameraOptions);
+
+your success callback will contain the URI of the image, so you can use that in the next step of uploading the file.
+
+you can then upload. Again there are options to set. You see here that we set the filename, type, and chunkedMode
+along with some extra meta data and then initiate the file upload to our server by calling the filetransfer.upload function.
+
+        var options = new FileUploadOptions();
+        options.fileKey = 'file';
+        options.fileName = newFileName // !== "" ? newFileName + ".jpg" : 'CameraSnapshot' + (attachmentNumber > 1 ? attachmentNumber : '') + '.jpg';
+        options.mimeType = 'image/jpeg';
+        options.chunkedMode = false;
+        options.params = { AttachmentListID: attachmentListID, Description: newDescription !== "" ? newDescription : "Image captured by user's mobile device." };
+        
+        var fileTransfer = new FileTransfer();
+        fileTransfer.upload(this.imageUri, encodeURI(url), onCreateAttachmentSuccess, onCreateAttachmentError, options);
+    
+    Now you have a photo uploaded to your server from your jQuery Mobile application.
+
+/* SHOW IMAGES OF TAKING A PHOTO WITH JQUERY MOBILE AND PHONEGAP */
+You see in our camera, you take the photo, then you can rename the file before uploading to the server,
+but it really is that simple. 
+5
+ Camera and Filesystem aren't all that are available through the PhoneGap bridge. 
+/* SHOW FULL LIST */
+YOu can see all the features that are available via phonegap, all with similar ease of implementation. 
+I think these are all great features, but what I really like is the plugin ecosystem which makes things like
+push notifications manageable across platforms.
+
+/* SLIDE 7 */
+Push Notifications
+
+Now I want to talk to you about one of the once forbidden fruits for Web developers on mobile.
+The ability to easily implement a remote push notification to your user's device. With PhoneGap
+you are able to add plugins to your source, that have their own separate source code and bridge
+to the native functionality. 
+
+For Push, I've used a couple of these services, Pushwoosh, which might win
+for having one of my favorite brand names, and UrbanAirship, which is the service I
+currently use. I'm not here to debate which one of those fits your needs better than the other,
+but I can tell you that the Urban Airship API for remote push sold me.
+
+How do you go about implementing one of these plugins? Well lets take a look at plugging in
+Urban Airship into a jQuery Mobile Phonegap Application.
+First you need to gather the important parts from the UrbanAirship site /* INSERT URL */
+
+You then need to do a little bit of special care for each of the platforms you are targeting. I'll take a
+look at iOS and Android here.
+
+I guess the first place to start is to set up the ability to push to remote devices. This happens 
+on the platform level, so you have to deal with Apple and Google for this. 
+/** MAKE SURE THIS IS ACCURATE **/
+Apple is (naturally) a bit more complex to setup push for iOS. You have to enable the Push Notification service for the
+provisioned application that your are building. This involves basically flipping a switch, but then
+you get to setup keys that will authenticate your development and production versions (this tells
+Apple which push server to serve from)... AND you'll need these to get Urban Airship running properly.
+
+With Google, you need to go to the developer settings on the play console and then enable the G Push service.
+Again, you'll need to keep your application key handy for later use so Urban Airship can use it.
+
+YOu now need to hook these keys up to your urban airship account - using their web management console.
+Now on to the natives!
+//// 13MINUTES !!!
+/* * TODO: MAKE THIS RIGHT * */
+For iOS First
+Add the PushNotificationPlugin and UAAppDelegateSurrogate classes to your Xcode project.
+
+These files bridge Cordova with the Urban Airship iOS library. PushNotificationPlugin is the plugin itself and takes care the the heavy
+lifting, 
+whereas UAAppDelegateSurrogate is a helper class that allows the plugin to configure itself for push without you needing to edit your App Delegate class.
+
+/* SKIP ???*/To add them, right click your project and select “Add files to xxx”. Once this is done, you can either add them to a new group, or place them in an existing “Plugins” group, as desired.
+Edit Cordova.plist to reference the plugin and whitelist Urban Airship URLs
+
+In order for Cordova to recognize the plugin, you’ll need to edit Cordova.plist to reference it. In the Plugins section, add a key/value pair with the string PushNotificationPlugin for both.
+
+In addition to this, under the ExternalHosts section, add the string *.urbanairship.com. This will whitelist Urban Airship URLs, to avoid complaints from the Cordova library.
+Add the Urban Airship iOS library to your Xcode project
+
+The Urban Airship iOS library is the component that enables the plugin to integrate with our server infrastructure. To integrate it with your project, follow these steps:
+
+    Download the latest libUAirship release from our resources page.
+    Copy the Airship directory from the unzipped package into your project’s top level directory
+    Add the contained libUAirship-x.x.x.a file to your project in Xcode, under Frameworks
+    In your project’s build settings, edit the Header Search Paths to recursively reference the Airship directory (Airship/**)
+
+Link your project with additional frameworks, there are a handful of these to integrate with and you can find them on the urban airship docs site.
+
+Okay, wow. that is a lot of steps to take care of. So luckily with Phonegap, and since I am building many similar apps to distribute to our clients
+individually, PhoneGap allows you to edit the template that builds the iOS project. I have done this to include all these steps one time, so that
+each time I call create_ios_project.sh it is already to go.
+
+Now is the time to make sure that your push ssl certificate is setup properly. This is the one you got from apple.
+Once you are sure you have this setup you should be able to send a message to your device. You can do this for a single developer device
+using the test settings.
+
+Now, there are a few gotchas with this. If you want to use the developer push servers (the absolutely free tier 
+for Urban Airship), you need to manually load the app on all your testing devices.
+However, if you do distributed testing through something like TestFlight or another adhoc deployment for iOS,
+you are not going to be able to use the test push servers for iOS. This is an apple and an UrbanAirship thing
+but it is as simple as adding a 'production' application on the UrbanAirship environment and then submitting.
+
+Android
+
+/*** THESE NEED REAL EXAMPLES BECAUSE IT BE CRAY CRAY ***/
+First you want to install the urbanairship library... its the .jar executable that will talk to the servers.
+
+Then, Install the PushNotificationPlugin.java and IntentReceiver.java files into your Android project.
+
+These files are the meat of the Java integration. The PushNotificationPlugin.java file contains all of the code that will be called from JavaScriptin your Android application. The IntentReceiver.java file contains all the code that handles Android events, and raises them for JavaScript. You will need to change the package name on the IntentReciever, to whatever your package is that you are embedding it in.
+
+Now you need to turn on
+
+@Override
+public void onCreate() {
+    super.onCreate();
+    UAirship.takeOff(this);
+    PushManager.enablePush();
+    PushManager.shared()setIntentReceiver(IntentReceiver.class)
+}
+
+Instrument your main Activity class
+
+Every Android Cordova app has a main Activity that extends DroidGap. If you would like your app to report analytics data
+    regarding time in app metrics and foreground/background events, you must add a few simple lines of Java to this class:
+
+@Override
+public void onStart() {
+    super.onStart();
+    UAirship.shared().getAnalytics().activityStarted(this);
+}
+@Override
+public void onStop() {
+    super.onStop();
+    UAirship.shared().getAnalytics().activityStopped(this);
+}
+
+Update your AndroidManifest.xml
+
+You must tell your application to use the Urban Airship library, and tell it where to send intents that our library generates. The bulk of the sample app AndroidManifest.xml shows how to do this. You will need to change class names where appropriate for your application.
+Update your airship.properties and location.properties files
+
+This is where configuration for your application goes. You will put your application key and application secret, which can be found in the Urban Airship web dashboard, in the airship.properties file. The location.properties file is where you configure location for your application, if you choose to use it. These are exampleversionsof these files in the assets irectory in the sample app.
+Add the Urban Airship JavaScript library to your PhoneGapproject
+//***** END ACTUAL Urban Airship EXAMPLE NEEDED
+
+For both platforms you will now need to bridge the gap with the urban airship javascript file.
+The PushNotification.js file needs to be included in your project. It is a normal JavaScript file, so you will to include it in an HTML document like normal. Our sample index.html shows an example of including it, and then using it a bit later on in the file.
+
+Thats pretty much it for the setup, if I missed anything you'll be able to find it in the docs, it really pretty straighforward stuff.
+The fun part comes with how easy it is to add push to your application.
+
+For me, I added a push module that will handle all the push events if the client has enabled push on their app.
+
+$("document").on("deviceready", function () {
+    push = window.pushNotification;
+    push.setBadgeNumber(0, function () {
+       //reset badge on iOS - you've seen it 
+    });
+
+    push.enablePush();
+    push.registerForNotificationTypes(push.notificationType.sound | push.notificationType.alert | push.notificationType.badge);
+
+
+    push.isPushEnabled(function (enabled) {
+        if (enabled) {
+            push.setAlias(healthx.userId, function () {
+               // alias set 
+            });
+        } else {
+
+        }
+    });
+
+    push.registerEvent("registration", function () {
+        push.setAlias(healthx.userId, function (ee) {
+            // alias set
+        });
+
+        push.setTags([healthx.siteid], function () {
+            // grouped by site
+        });
+    });
+
+
+}, false);
+
+Now the API is also super easy to use, you can test by just running a cURL command
+curl -X POST -u "<appkey>:<mastersecret>" -H "Content-Type: application/json" --data '{"tags": ["<tag>"],"android": { "alert": "tag api push" }}' 
+make sure that your authentication keys are correct (master secret not just secret or you won't get a result.).
+
+A few issues that I've encountered is that there are several ways the push will fail, and unfortunately they aren't logged well.
+This isn't UrbanAirships fault or maybe not apple or google. but because UrbanAirship only knows what it recieves, some of the errors
+can be quite ambiguous and tracking them down can be a pain.
+
+/* REMOTE DEBUGGING */
+This is one of my most favorite things to hate. Remote debugging has progressed so far in just a short amount of time, but it
+still makes me stabby.
+
+Lets take a look at some of the remote debugging techniques that are available for use today.
+
+Firstly, you have the quick n dirty, alert debugging. Lets face it, when push comes to shove,
+you might just throw in an alert and debug your jQuery Mobile application. That works fine and all, but
+its really not acceptable if your are tracking down anything more than a tiny portion of your app.
+
+The next place to be is using some of the native remote debugging that is built into modern browsers. This is
+obviously an early step because eventually you will need to move away from the mobile browser and into the
+world of the native wrapper to be an accurate representation, but the mobile browser is a great start.
+
+There are three big players in the mobile browser remote debugging space that I have used.
+Opera, Chrome, and Firefox all have great remote debugging built in.
+
+Opera is probably the most unique setup of these. You initiate this through the Dragonfly
+developer tool stating that you would like to initiate the remote debugging session and which port
+you will be enabling this remote session over. you then go to your opera mobile browser and
+type "opera:debug" and then you will be able to debug your stuff remotely using the full set of
+tools that dragonfly offers. (
+/* CHECK TO SEE IF OPERA.NEXT STILL DOES REMOTE DEBUGGING */
+
+Chrome and Firefox both use their native browser debugging tools as well, but these are designed to be used over the
+Android Debug bridge (adb) with your device tethered to your machine. The setup is similar but I'll break it down a little
+bit.
+
+Chrome simply needs you to enable remote debugging on your android device, and within chrome mobile. you then need to
+connect your device to your machine and (assuming that you have the android tools installed) forward the port
+using adb forward tcp:9222 localabstract:chrome_devtools_remote"
+This will allow you to visit localhost:9222 on your machine and grant you full dev tools features on the remote
+connection. 
+
+Firefox is similar, its quite simple to enable on your computer: just swing over to ‘about:config’ and toggle ‘devtools.debugger.remote-enabled’ to ‘true’ restart, and you are set.
+
+Then, to enable remote debugging on your Android device, you again go to ‘about:config’ and toggle the ‘devtools.debugger.force-local’ to ‘false’ and ‘devtools.debugger.remote-enabled’ to ‘true’.
+
+adb forward tcp:6000 tcp:6000
+
+and you now have access to the firefox dev tools (which if you haven't debugged in firefox for a while, its worth a look).
+
+So this is great during development, when you are fleshing out the look and feel and bugs in your app, but 
+once you get this packaged as a native app, you can't use these modern browser features any longer. For this you can
+turn to a couple remote debugging tools that I've used.
+
+The easiest to just whip together that I have used is jsconsole.com. this is as simple as adding a reference
+to a remote control script in your application, then navigating to jsconsole. typing :listen "key" into the
+the console, and you have access to the console of your device. Whilst this is a good resource the hangups
+are that you don't have full access to common developer tools features, and for me this is great a getting a
+glipse at errors as they occur and not really tweaking anything.
+
+Then there is Adobe Edge Inspect (used to be shadow) which is an application that you run on your machine and your
+remote device. the machine runs a server where you gain access to the debug tools, and the remote device forwards this
+on to the tools.
+
+The next class of remote debugging is by far winning and the best available in my opinion. These tools give you access to 
+at least a subset of developer tools which is hot. 
+Originally created for PhoneGap /** VERIFY THIS STATEMENT */ is Weinre (Web Inspector REmote). The easiest way to use this
+functionality is to go to debug.phonegap.com. YOu tell this site what key you want tuse to identify your application and then
+you copy a script tag and insert that into the application. You then co to the debug client which is linked from the debug
+site. your webpage will be forwarded to the inspector interface and you will have access to more than just the console.
+
+You can of course run this yourself. This used to be a complex task of downloading the .jar executable and running
+the java server all over your machine, and while this was beneficial to say the least, it was also kindof a pain
+to get running (at least for me it was). but fear not! this is way easy now.
+
+npm install -g weinre
+
+then weinre
+
+then bind to that port remote and you have a local remote web inspector server. I find running this on my own to 
+be more reliable at times that debug.phonegap.com, It might just be my impression, or just the fact that I want to have
+more control over my debug workflow. and it seems to work best for me when I'm debugging ios or android apps 
+wrapped with phonegap.
+
+/* Managining urls in iOS */
+
+Our application is really a platform for health plans or administrators to distribute custom applications to their
+members. As such we allow custom content creation and a high level of customization across the mobile client. This
+means that we have an unknown number and destination of linked resources to things like their mobile contact information
+or health plan documents, that they choose to to serve from our mobile app directly, but have them linked. 
+This presents a huge problem with the webview on iOS. because since the webview has no concept of a browser back button,
+and once your application leaves jQuery Mobile (which you should build with a back button!))) /* SHOW ITS A TRAP */
+you trap your users, which is bad for them and they will also not use your application again. ever.
+
+Luckily PhoneGap allows you to whitelist urls, meaning you have a list of urls that you are okay serving in the webview, and some that you arent.
+in our situation we actually tell phonegap to serve all content in the webview and we programatically tell the app
+which pages to serve in safari. This can be the images taken from the camera - if we preview this page from our server, we don't provide
+a back button because its just a download page for the jpg.so we choose to open it in safari. each url is unique so there isn't
+a viable way we could tell the application to go to each one of these urls and send them out to safari... or is there?
+
+To get around this trapping problem there are a couple of techniques that I have employed. First is simply to add a querystring parameter
+to the url, then check for that querystring parameter in the Obj-C code that controls whether or not to serve the page in the
+webview. This means that you need to know the exact querystring parameter (and in our case where we have clients building custom
+links in their content we need to really evangilize this and mispellings of external=true or something are common) this would look like
+/* SHOW THE LINK CODE */ this in the code and is pretty straighforward, but like I said, probably only best if you are the only one
+controlling this.
+javascript to the rescue
+The better solution for us was to leverage the target attribute in the anchor tag. We tell our clients to set the target='_blank' attribute 
+tog et the urls to open outside of the webview. We then perform some jQuery Magic at mobile init of the application that will bind all
+achors with this attribuate and add a fragment to the url. we then look for this fragment in the Obj-c and trapping is prevented,
+as well as the maintaince nightmare of maintaining a whole list of urls.
